@@ -1,65 +1,96 @@
+import { isMobile, silencePromise } from './utils'
+
 export default class Hotkey {
-    constructor(art) {
-        this.keys = {};
+  constructor(art) {
+    this.art = art
+    this.keys = {}
 
-        const {
-            option,
-            player,
-            events: { proxy },
-        } = art;
+    if (!isMobile) {
+      this.init()
+    }
+  }
 
-        if (option.hotkey) {
-            art.once('ready', () => {
-                this.add(27, () => {
-                    if (player.fullscreenWeb) {
-                        player.fullscreenWeb = false;
-                    }
-                });
+  init() {
+    const { constructor } = this.art
 
-                this.add(32, () => {
-                    player.toggle();
-                });
-
-                this.add(37, () => {
-                    player.backward = 5;
-                });
-
-                this.add(38, () => {
-                    player.volume += 0.1;
-                });
-
-                this.add(39, () => {
-                    player.forward = 5;
-                });
-
-                this.add(40, () => {
-                    player.volume -= 0.1;
-                });
-
-                proxy(window, 'keydown', (event) => {
-                    if (art.isFocus) {
-                        const tag = document.activeElement.tagName.toUpperCase();
-                        const editable = document.activeElement.getAttribute('contenteditable');
-                        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && editable !== '' && editable !== 'true') {
-                            const events = this.keys[event.keyCode];
-                            if (events) {
-                                event.preventDefault();
-                                events.forEach((fn) => fn.call(art));
-                                art.emit('hotkey', event);
-                            }
-                        }
-                    }
-                });
-            });
+    if (this.art.option.hotkey) {
+      this.add('Escape', () => {
+        if (this.art.fullscreenWeb) {
+          this.art.fullscreenWeb = false
         }
+      })
+
+      this.add('Space', () => {
+        silencePromise(this.art.toggle())
+      })
+
+      this.add('ArrowLeft', () => {
+        this.art.backward = constructor.SEEK_STEP
+      })
+
+      this.add('ArrowUp', () => {
+        this.art.volume += constructor.VOLUME_STEP
+      })
+
+      this.add('ArrowRight', () => {
+        this.art.forward = constructor.SEEK_STEP
+      })
+
+      this.add('ArrowDown', () => {
+        this.art.volume -= constructor.VOLUME_STEP
+      })
     }
 
-    add(key, event) {
-        if (this.keys[key]) {
-            this.keys[key].push(event);
-        } else {
-            this.keys[key] = [event];
+    this.art.on('document:keydown', (event) => {
+      if (this.art.isFocus) {
+        const tag = document.activeElement.tagName.toUpperCase()
+        const editable = document.activeElement.getAttribute('contenteditable')
+        if (
+          tag !== 'INPUT'
+          && tag !== 'TEXTAREA'
+          && editable !== ''
+          && editable !== 'true'
+          && !event.altKey
+          && !event.ctrlKey
+          && !event.metaKey
+          && !event.shiftKey
+        ) {
+          const events = this.keys[event.code]
+          if (events) {
+            event.preventDefault()
+            for (let index = 0; index < events.length; index++) {
+              events[index].call(this.art, event)
+            }
+            this.art.emit('hotkey', event)
+          }
         }
-        return this;
+      }
+      this.art.emit('keydown', event)
+    })
+  }
+
+  add(key, event) {
+    if (this.keys[key]) {
+      if (!this.keys[key].includes(event)) {
+        this.keys[key].push(event)
+      }
     }
+    else {
+      this.keys[key] = [event]
+    }
+    return this
+  }
+
+  remove(key, event) {
+    if (this.keys[key]) {
+      const index = this.keys[key].indexOf(event)
+      if (index !== -1) {
+        this.keys[key].splice(index, 1)
+      }
+      if (this.keys[key].length === 0) {
+        delete this.keys[key]
+      }
+    }
+    return this
+  }
 }

@@ -1,13 +1,14 @@
-import { def } from '../utils';
+import { def } from '../utils'
 
-export default function toggleMix(art, player) {
-    def(player, 'toggle', {
-        value() {
-            if (player.playing) {
-                return player.pause();
-            } else {
-                return player.play();
-            }
-        },
-    });
+export default function toggleMix(art) {
+  def(art, 'toggle', {
+    value() {
+      if (art.playing) {
+        return art.pause()
+      }
+      else {
+        return art.play()
+      }
+    },
+  })
 }

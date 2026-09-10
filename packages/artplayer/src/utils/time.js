@@ -1,46 +1,32 @@
 export function sleep(ms = 0) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export function debounce(func, wait, context) {
-    let timeout;
-    function fn(...args) {
-        const later = function later() {
-            timeout = null;
-            func.apply(context, args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+export function debounce(func, duration) {
+  let timeout
+
+  return function (...args) {
+    const effect = () => {
+      timeout = null
+      return func.apply(this, args)
     }
 
-    fn.clearTimeout = function ct() {
-        clearTimeout(timeout);
-    };
-
-    return fn;
+    clearTimeout(timeout)
+    timeout = setTimeout(effect, duration)
+  }
 }
 
-export function throttle(callback, delay) {
-    let isThrottled = false;
-    let args;
-    let context;
-    function fn(...args2) {
-        if (isThrottled) {
-            args = args2;
-            context = this;
-            return;
-        }
+export function throttle(func, duration) {
+  let shouldWait = false
 
-        isThrottled = true;
-        callback.apply(this, args2);
-        setTimeout(() => {
-            isThrottled = false;
-            if (args) {
-                fn.apply(context, args);
-                args = null;
-                context = null;
-            }
-        }, delay);
+  return function (...args) {
+    if (!shouldWait) {
+      func.apply(this, args)
+      shouldWait = true
+
+      setTimeout(() => {
+        shouldWait = false
+      }, duration)
     }
-    return fn;
+  }
 }

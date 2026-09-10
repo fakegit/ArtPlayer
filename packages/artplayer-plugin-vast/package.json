@@ -1,0 +1,40 @@
+{
+  "name": "artplayer-plugin-vast",
+  "version": "1.2.0",
+  "description": "VAST plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-vast.d.ts",
+      "import": "./dist/artplayer-plugin-vast.mjs",
+      "require": "./dist/artplayer-plugin-vast.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-vast.d.ts",
+      "import": "./dist/artplayer-plugin-vast.legacy.js",
+      "require": "./dist/artplayer-plugin-vast.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-vast.js",
+  "module": "./dist/artplayer-plugin-vast.mjs",
+  "types": "./types/artplayer-plugin-vast.d.ts",
+  "legacy": "./dist/artplayer-plugin-vast.legacy.js",
+  "browserslist": "last 1 Chrome version",
+  "dependencies": {
+    "@glomex/vast-ima-player": "^1.21.2"
+  }
+}

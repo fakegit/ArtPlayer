@@ -1,30 +1,38 @@
-import { inverseClass, queryAll } from '../utils';
+import { inverseClass, query, queryAll } from '../utils'
 
 export default function aspectRatio(option) {
-    return (art) => {
-        const { i18n, player } = art;
-        return {
-            ...option,
-            html: `${i18n.get('Aspect ratio')}:
-                <span data-ratio="default" class="art-current">${i18n.get('Default')}</span>
-                <span data-ratio="4:3">4:3</span>
-                <span data-ratio="16:9">16:9</span>
-            `,
-            click: (contextmenu, event) => {
-                const { ratio } = event.target.dataset;
-                if (ratio) {
-                    player.aspectRatio = ratio;
-                    contextmenu.show = false;
-                }
-            },
-            mounted: ($menu) => {
-                art.on('aspectRatio', (ratio) => {
-                    const $current = queryAll('span', $menu).find((item) => item.dataset.ratio === ratio);
-                    if ($current) {
-                        inverseClass($current, 'art-current');
-                    }
-                });
-            },
-        };
-    };
+  return (art) => {
+    const {
+      i18n,
+      constructor: { ASPECT_RATIO },
+    } = art
+
+    const html = ASPECT_RATIO.map(
+      item => `<span data-value="${item}">${item === 'default' ? i18n.get('Default') : item}</span>`,
+    ).join('')
+
+    return {
+      ...option,
+      html: `${i18n.get('Aspect Ratio')}: ${html}`,
+      click: (contextmenu, event) => {
+        const { value } = event.target.dataset
+        if (value) {
+          art.aspectRatio = value
+          contextmenu.show = false
+        }
+      },
+      mounted: ($panel) => {
+        const $default = query('[data-value="default"]', $panel)
+        if ($default) {
+          inverseClass($default, 'art-current')
+        }
+        art.on('aspectRatio', (value) => {
+          const $current = queryAll('span', $panel).find(item => item.dataset.value === value)
+          if ($current) {
+            inverseClass($current, 'art-current')
+          }
+        })
+      },
+    }
+  }
 }

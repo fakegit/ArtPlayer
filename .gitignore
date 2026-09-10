@@ -1,9 +1,7 @@
-node_modules
+.env
 .vscode
 .DS_Store
-*.log
-examples
-commit.json
+node_modules
 package-lock.json
-.size-snapshot.json
+lerna-debug.log
 yarn.lock

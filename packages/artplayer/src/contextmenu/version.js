@@ -1,6 +1,8 @@
-export default function version(option) {
-    return {
-        ...option,
-        html: '<a href="https://artplayer.org" target="_blank">ArtPlayer __VERSION__</a>',
-    };
+import { version } from '../../package.json'
+
+export default function (option) {
+  return {
+    ...option,
+    html: `<a href="https://artplayer.org" target="_blank" style="width:100%;">ArtPlayer ${version}</a>`,
+  }
 }

@@ -1,0 +1,37 @@
+{
+  "name": "artplayer-plugin-hls-control",
+  "version": "1.1.0",
+  "description": "Hls control plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-hls-control.d.ts",
+      "import": "./dist/artplayer-plugin-hls-control.mjs",
+      "require": "./dist/artplayer-plugin-hls-control.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-hls-control.d.ts",
+      "import": "./dist/artplayer-plugin-hls-control.legacy.js",
+      "require": "./dist/artplayer-plugin-hls-control.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-hls-control.js",
+  "module": "./dist/artplayer-plugin-hls-control.mjs",
+  "types": "./types/artplayer-plugin-hls-control.d.ts",
+  "legacy": "./dist/artplayer-plugin-hls-control.legacy.js",
+  "browserslist": "last 1 Chrome version"
+}

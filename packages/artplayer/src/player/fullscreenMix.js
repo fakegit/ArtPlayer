@@ -1,87 +1,88 @@
-import screenfull from 'screenfull';
-import { addClass, removeClass, def, get } from '../utils';
+import screenfull from '../libs/screenfull'
+import { addClass, def, get, removeClass } from '../utils'
 
-const nativeScreenfull = (art, player) => {
-    const { $player } = art.template;
+export default function fullscreenMix(art) {
+  const {
+    i18n,
+    notice,
+    template: { $video, $player },
+  } = art
 
-    screenfull.on('change', () => art.emit('fullscreen', screenfull.isFullscreen));
+  const nativeScreenfull = (art) => {
+    screenfull.on('change', () => {
+      art.emit('fullscreen', screenfull.isFullscreen)
 
-    def(player, 'fullscreen', {
-        get() {
-            return screenfull.isFullscreen;
-        },
-        set(value) {
-            if (value) {
-                screenfull.request($player).then(() => {
-                    addClass($player, 'art-fullscreen');
-                    player.aspectRatioReset = true;
-                    art.emit('resize');
-                    art.emit('fullscreen', true);
-                });
-            } else {
-                screenfull.exit().then(() => {
-                    removeClass($player, 'art-fullscreen');
-                    player.aspectRatioReset = true;
-                    player.autoSize = art.option.autoSize;
-                    art.emit('resize');
-                    art.emit('fullscreen');
-                });
-            }
-        },
-    });
-};
+      if (screenfull.isFullscreen) {
+        art.state = 'fullscreen'
+        addClass($player, 'art-fullscreen')
+      }
+      else {
+        removeClass($player, 'art-fullscreen')
+      }
 
-const webkitScreenfull = (art, player) => {
-    const { $video } = art.template;
+      art.emit('resize')
+    })
 
-    def(player, 'fullscreen', {
-        get() {
-            return $video.webkitDisplayingFullscreen;
-        },
-        set(value) {
-            if (value) {
-                $video.webkitEnterFullscreen();
-                art.emit('fullscreen', true);
-            } else {
-                $video.webkitExitFullscreen();
-                art.emit('fullscreen');
-            }
-        },
-    });
-};
+    screenfull.on('error', (event) => {
+      art.emit('fullscreenError', event)
+    })
 
-export default function fullscreenMix(art, player) {
-    const {
-        i18n,
-        notice,
-        template: { $video },
-    } = art;
-
-    art.once('ready', () => {
-        if (screenfull.isEnabled) {
-            nativeScreenfull(art, player);
-        } else if (document.fullscreenEnabled || $video.webkitSupportsFullscreen) {
-            webkitScreenfull(art, player);
-        } else {
-            def(player, 'fullscreen', {
-                get() {
-                    return false;
-                },
-                set() {
-                    notice.show = i18n.get('Fullscreen not supported');
-                },
-            });
+    def(art, 'fullscreen', {
+      get() {
+        return screenfull.isFullscreen
+      },
+      async set(value) {
+        if (value) {
+          await screenfull.request($player)
         }
+        else {
+          await screenfull.exit()
+        }
+      },
+    })
+  }
 
-        // 异步设置
-        def(art, 'fullscreen', get(player, 'fullscreen'));
-    });
+  const webkitScreenfull = (art) => {
+    art.on('document:webkitfullscreenchange', () => {
+      art.emit('fullscreen', art.fullscreen)
+      art.emit('resize')
+    })
 
-    def(player, 'fullscreenToggle', {
-        set(value) {
-            if (value) {
-                player.fullscreen = !player.fullscreen;
-            }
+    def(art, 'fullscreen', {
+      get() {
+        return document.fullscreenElement === $video
+      },
+      set(value) {
+        if (value) {
+          art.state = 'fullscreen'
+          $video.webkitEnterFullscreen()
+        }
+        else {
+          $video.webkitExitFullscreen()
+        }
+      },
+    })
+  }
+
+  art.once('video:loadedmetadata', () => {
+    if (screenfull.isEnabled) {
+      nativeScreenfull(art)
+    }
+    else if ($video.webkitSupportsFullscreen) {
+      webkitScreenfull(art)
+    }
+    else {
+      def(art, 'fullscreen', {
+        get() {
+          return false
         },
-    });
+        set() {
+          notice.show = i18n.get('Fullscreen Not Supported')
+        },
+      })
+    }
+
+    // Asynchronous setting
+    def(art, 'fullscreen', get(art, 'fullscreen'))
+  })
 }

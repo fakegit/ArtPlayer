@@ -1,68 +1,100 @@
-var vConsole = new VConsole();
-var art = new Artplayer({
-    container: '.artplayer-app',
-    url: 'https://artplayer.org/assets/sample/video.mp4',
-    title: 'One More Time One More Chance',
-    poster: '/assets/sample/poster.jpg',
-    autoSize: true,
-    loop: true,
-    mutex: true,
-    theme: '#ffad00',
-    fullscreen: true,
-    fullscreenWeb: true,
-    miniProgressBar: true,
-    moreVideoAttr: {
-        playsInline: true,
-        'webkit-playsinline': true,
-        'x5-video-player-type': 'h5',
-        'x5-video-player-fullscreen': false,
-        'x5-video-orientation': 'portraint',
-    },
-    subtitle: {
-        url: '/assets/sample/subtitle.srt',
-        style: {
-            color: '#fff',
-            fontSize: '14px',
-        },
-    },
-    layers: [
-        {
-            html: `<img style="width: 50px" src="/assets/sample/layer.png">`,
-            click: function () {
-                console.info('You clicked on the custom layer');
-            },
-            style: {
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                opacity: '.9',
-            },
-        },
-    ],
-    icons: {
-        loading: '<img src="./assets/img/ploading.gif">',
-        state: '<img src="./assets/img/state.png">',
-    },
-    plugins: [
-        artplayerPluginDanmuku({
-            danmuku: '/assets/sample/danmuku.xml',
-            speed: 5,
-            maxlength: 100,
-            margin: [10, 70],
-            opacity: 1,
-            fontSize: 14,
-            synchronousPlayback: false,
-        }),
-    ],
-    whitelist: ['*'],
-});
+(function () {
+    Artplayer.DEBUG = true;
 
-Artplayer.config.events.forEach(function (item) {
-    art.on('video:' + item, function (event) {
-        console.log('video: ' + event.type);
-    });
-});
+    function getURLParameters(url) {
+        return (url.match(/([^?=&]+)(=([^&]*))/g) || []).reduce(function (a, v) {
+            return (a[v.slice(0, v.indexOf('='))] = v.slice(v.indexOf('=') + 1)), a;
+        }, {});
+    }
 
-if (art.isWechat) {
-    document.querySelector('.tip').textContent = '微信环境需手动触发播放';
-}
+    function getExt(url) {
+        if (url.includes('?')) {
+            return getExt(url.split('?')[0]);
+        }
+
+        if (url.includes('#')) {
+            return getExt(url.split('#')[0]);
+        }
+
+        return url.trim().toLowerCase().split('.').pop();
+    }
+
+    function loadScript(url) {
+        return new Promise(function (resolve, reject) {
+            var define2 = window.define;
+            window.define = undefined;
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = url;
+            script.onload = function () {
+                window.define = define2;
+                resolve(url);
+            };
+            script.onerror = function () {
+                reject(new Error('Loading script failed:' + url));
+            };
+            document.querySelector('head').appendChild(script);
+        });
+    }
+
+    function loadStyle(url) {
+        return new Promise(function (resolve, reject) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = url;
+            link.onload = function () {
+                resolve(url);
+            };
+            link.onerror = function () {
+                reject(new Error('Loading style failed:' + url));
+            };
+            document.querySelector('head').appendChild(link);
+        });
+    }
+
+    function loadLib(libs) {
+        var libPromise = [];
+        var libsDecode = decodeURIComponent(libs || '');
+        libsDecode
+            .split(/\r?\n/)
+            .forEach(function (url) {
+                var ext = getExt(url);
+                if (ext === 'js') {
+                    libPromise.push(loadScript(url));
+                } else if (ext === 'css') {
+                    libPromise.push(loadStyle(url));
+                }
+            });
+        return Promise.all(libPromise);
+    }
+
+    function runExample(name) {
+        fetch('./assets/example/' + name + '.js')
+            .then(function (response) {
+                return response.text();
+            })
+            .then(function (text) {
+                eval(text);
+            })
+    }
+
+    function loadCode(code, example) {
+        if (example) {
+            runExample(example);
+        } else if (code) {
+           eval(decodeURIComponent(code).trim());
+        } else {
+            runExample('mobile');
+        }
+    }
+
+    var _getURLParameters = getURLParameters(window.location.href),
+            code = _getURLParameters.code,
+            libs = _getURLParameters.libs;
+        example = _getURLParameters.example;
+
+    loadLib(libs)
+        .then(function () {
+            loadCode(code, example);
+        })
+})();

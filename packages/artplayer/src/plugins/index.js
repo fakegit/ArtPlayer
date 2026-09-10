@@ -1,45 +1,59 @@
-import { errorHandle, has, def } from '../utils';
-import subtitleOffset from './subtitleOffset';
-import localVideo from './localVideo';
-import localSubtitle from './localSubtitle';
-import miniProgressBar from './miniProgressBar';
+import { def, errorHandle, has, isMobile } from '../utils'
+import autoOrientation from './autoOrientation'
+import autoPlayback from './autoPlayback'
+import fastForward from './fastForward'
+import lock from './lock'
+import miniProgressBar from './miniProgressBar'
 
 export default class Plugins {
-    constructor(art) {
-        this.art = art;
-        this.id = 0;
+  constructor(art) {
+    this.art = art
+    this.id = 0
 
-        const { option } = art;
+    const { option } = art
 
-        if (option.subtitle.url && option.subtitleOffset) {
-            this.add(subtitleOffset);
-        }
-
-        if (!option.isLive && option.miniProgressBar) {
-            this.add(miniProgressBar);
-        }
-
-        if (option.localVideo) {
-            this.add(localVideo);
-        }
-
-        if (option.localSubtitle) {
-            this.add(localSubtitle);
-        }
-
-        art.option.plugins.forEach((plugin) => {
-            this.add(plugin);
-        });
+    if (option.miniProgressBar && !option.isLive) {
+      this.add(miniProgressBar)
     }
 
-    add(plugin) {
-        this.id += 1;
-        const result = plugin.call(this, this.art);
-        const pluginName = (result && result.name) || plugin.name || `plugin${this.id}`;
-        errorHandle(!has(this, pluginName), `Cannot add a plugin that already has the same name: ${pluginName}`);
-        def(this, pluginName, {
-            value: result,
-        });
-        return this;
+    if (option.lock && isMobile) {
+      this.add(lock)
     }
+
+    if (option.autoPlayback && !option.isLive) {
+      this.add(autoPlayback)
+    }
+
+    if (option.autoOrientation && isMobile) {
+      this.add(autoOrientation)
+    }
+
+    if (option.fastForward && isMobile && !option.isLive) {
+      this.add(fastForward)
+    }
+
+    for (let index = 0; index < option.plugins.length; index++) {
+      this.add(option.plugins[index])
+    }
+  }
+
+  add(plugin) {
+    this.id += 1
+    const result = plugin.call(this.art, this.art)
+    if (result instanceof Promise) {
+      return result.then(res => this.next(plugin, res))
+    }
+    else {
+      return this.next(plugin, result)
+    }
+  }
+
+  next(plugin, result) {
+    const pluginName = (result && result.name) || plugin.name || `plugin${this.id}`
+    errorHandle(!has(this, pluginName), `Cannot add a plugin that already has the same name: ${pluginName}`)
+    def(this, pluginName, {
+      value: result,
+    })
+    return this
+  }
 }

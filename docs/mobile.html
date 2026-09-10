@@ -5,42 +5,46 @@
     <meta charset="UTF-8" />
     <title>Artplayer.js</title>
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="google-adsense-account" content="ca-pub-8579453810848662">
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <meta name="keywords" content="artplayer, player, js, html5, video" />
     <meta name="description" content="ArtPlayer.js is a modern and full featured HTML5 video player" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="shortcut icon" href="./assets/img/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="./assets/css/normalize.css">
-    <link rel="stylesheet" href="./assets/css/mobile.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8579453810848662"
+        crossorigin="anonymous"></script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .artplayer-app {
+            aspect-ratio: 16 / 9;
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
         <div class="artplayer-app"></div>
-        <p class="tip"></p>
     </div>
-    <script src="https://cdn.bootcss.com/vConsole/3.2.0/vconsole.min.js"></script>
-    <script src="./uncompiled/artplayer.js?t=6"></script>
-    <script src="./uncompiled/artplayer-plugin-danmuku.js"></script>
+    <script src="./assets/js/vconsole.min.js"></script>
+    <script>var vConsole = new VConsole();</script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/artplayer@5.1.1/dist/artplayer.js"></script> -->
+    <script src="./uncompiled/artplayer/index.js"></script>
+    <!-- <script src="./compiled/artplayer.js"></script> -->
     <script src="./assets/js/mobile.js"></script>
-    <script>
-        var isLocalhost = Boolean(
-            window.location.hostname === 'localhost' ||
-            window.location.hostname === '[::1]' ||
-            window.location.hostname.match(
-                /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
-            )
-        );
-        var _hmt = _hmt || [];
-        (function () {
-            if (!isLocalhost) {
-                var hm = document.createElement('script');
-                hm.src = 'https://hm.baidu.com/hm.js?b6c9b8bafbf5fe7225160101dafbbc7d';
-                var s = document.getElementsByTagName('script')[0];
-                s.parentNode.insertBefore(hm, s);
-            }
-        })();
-    </script>
 </body>
 
 </html>

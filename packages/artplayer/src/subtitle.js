@@ -1,141 +1,183 @@
+import validator from 'option-validator'
+import scheme from './scheme'
 import {
-    setStyle,
-    setStyles,
-    srtToVtt,
-    vttToBlob,
-    getExt,
-    assToVtt,
-    addClass,
-    escape,
-    removeClass,
-    hasClass,
-} from './utils';
-import Component from './utils/component';
+  append,
+  assToVtt,
+  createElement,
+  escape,
+  getExt,
+  remove,
+  setStyle,
+  setStyles,
+  srtToVtt,
+  vttToBlob,
+} from './utils'
+import Component from './utils/component'
 
 export default class Subtitle extends Component {
-    constructor(art) {
-        super(art);
+  constructor(art) {
+    super(art)
+    this.name = 'subtitle'
+    this.option = null
+    this.destroyEvent = () => null
+    this.init(art.option.subtitle)
 
-        this.name = 'subtitle';
+    let lastState = false
+    art.on('video:timeupdate', () => {
+      if (!this.url)
+        return
+      const state = this.art.template.$video.webkitDisplayingFullscreen
+      if (typeof state !== 'boolean')
+        return
+      if (state !== lastState) {
+        lastState = state
+        this.createTrack(state ? 'subtitles' : 'metadata', this.url)
+      }
+    })
+  }
 
-        const {
-            option: { subtitle },
-            template: { $subtitle },
-        } = art;
+  get url() {
+    return this.art.template.$track.src
+  }
 
-        setStyles($subtitle, subtitle.style);
+  set url(url) {
+    this.switch(url)
+  }
 
-        if (subtitle.url) {
-            this.init(subtitle.url);
+  get textTrack() {
+    return this.art.template.$video?.textTracks?.[0]
+  }
+
+  get activeCues() {
+    if (!this.textTrack)
+      return []
+    return Array.from(this.textTrack.activeCues)
+  }
+
+  get cues() {
+    if (!this.textTrack)
+      return []
+    return Array.from(this.textTrack.cues)
+  }
+
+  style(key, value) {
+    const { $subtitle } = this.art.template
+    if (typeof key === 'object') {
+      return setStyles($subtitle, key)
+    }
+    return setStyle($subtitle, key, value)
+  }
+
+  update() {
+    const {
+      option: { subtitle },
+      template: { $subtitle },
+    } = this.art
+
+    $subtitle.innerHTML = ''
+    if (!this.activeCues.length)
+      return
+
+    this.art.emit('subtitleBeforeUpdate', this.activeCues)
+    $subtitle.innerHTML = this.activeCues
+      .map((cue, index) =>
+        cue.text
+          .split(/\r?\n/)
+          .filter(line => line.trim())
+          .map(
+            line =>
+              `<div class="art-subtitle-line" data-group="${index}">
+                                ${subtitle.escape ? escape(line) : line}
+                            </div>`,
+          )
+          .join(''),
+      )
+      .join('')
+    this.art.emit('subtitleAfterUpdate', this.activeCues)
+  }
+
+  async switch(url, newOption = {}) {
+    const { i18n, notice, option } = this.art
+    const subtitleOption = { ...option.subtitle, ...newOption, url }
+    const subUrl = await this.init(subtitleOption)
+    if (newOption.name) {
+      notice.show = `${i18n.get('Switch Subtitle')}: ${newOption.name}`
+    }
+    return subUrl
+  }
+
+  createTrack(kind, url) {
+    const { template, proxy, option } = this.art
+    const { $video, $track } = template
+
+    const $newTrack = createElement('track')
+    $newTrack.default = true
+    $newTrack.kind = kind
+    $newTrack.src = url
+    $newTrack.label = option.subtitle.name || 'Artplayer'
+    $newTrack.track.mode = 'hidden'
+    $newTrack.onload = () => {
+      this.art.emit('subtitleLoad', this.cues, this.option)
+    }
+
+    this.art.events.remove(this.destroyEvent)
+    $track.onload = null
+    remove($track)
+    append($video, $newTrack)
+    template.$track = $newTrack
+    this.destroyEvent = proxy(this.textTrack, 'cuechange', () => this.update())
+  }
+
+  async init(subtitleOption) {
+    const {
+      notice,
+      template: { $subtitle },
+    } = this.art
+
+    if (!this.textTrack)
+      return null
+    validator(subtitleOption, scheme.subtitle)
+    if (!subtitleOption.url)
+      return
+    this.option = subtitleOption
+    this.style(subtitleOption.style)
+
+    return fetch(subtitleOption.url)
+      .then(response => response.arrayBuffer())
+      .then((buffer) => {
+        const decoder = new TextDecoder(subtitleOption.encoding)
+        const text = decoder.decode(buffer)
+        switch (subtitleOption.type || getExt(subtitleOption.url)) {
+          case 'srt': {
+            const vtt = srtToVtt(text)
+            const vttNew = subtitleOption.onVttLoad(vtt)
+            return vttToBlob(vttNew)
+          }
+          case 'ass': {
+            const vtt = assToVtt(text)
+            const vttNew = subtitleOption.onVttLoad(vtt)
+            return vttToBlob(vttNew)
+          }
+          case 'vtt': {
+            const vttNew = subtitleOption.onVttLoad(text)
+            return vttToBlob(vttNew)
+          }
+          default:
+            return subtitleOption.url
         }
-
-        if (subtitle.bilingual) {
-            addClass($subtitle, 'art-bilingual');
-        }
-    }
-
-    get url() {
-        return this.art.template.$track.src;
-    }
-
-    get textTrack() {
-        return this.art.template.$video.textTracks[0];
-    }
-
-    get activeCue() {
-        return this.textTrack.activeCues[0];
-    }
-
-    get bilingual() {
-        const { $subtitle } = this.art.template;
-        return hasClass($subtitle, 'art-bilingual');
-    }
-
-    set bilingual(val) {
-        const { $subtitle } = this.art.template;
-        if (val) {
-            addClass($subtitle, 'art-bilingual');
-        } else {
-            removeClass($subtitle, 'art-bilingual');
-        }
-    }
-
-    style(key, value) {
-        const { $subtitle } = this.art.template;
-        if (typeof key === 'object') {
-            return setStyles($subtitle, key);
-        }
-        return setStyle($subtitle, key, value);
-    }
-
-    update() {
-        const { $subtitle } = this.art.template;
-        $subtitle.innerHTML = '';
-        if (this.activeCue) {
-            $subtitle.innerHTML = this.activeCue.text
-                .split(/\r?\n/)
-                .map((item) => `<p>${escape(item)}</p>`)
-                .join('');
-            this.art.emit('subtitleUpdate', this.activeCue.text);
-        }
-    }
-
-    switch(url, opt = {}) {
-        const { i18n, notice } = this.art;
-        return this.init(url, opt).then((subUrl) => {
-            if (opt.name) {
-                notice.show = `${i18n.get('Switch subtitle')}: ${opt.name}`;
-            }
-            this.art.emit('subtitleSwitch', subUrl);
-            return subUrl;
-        });
-    }
-
-    init(url, opt = {}) {
-        const {
-            notice,
-            events: { proxy },
-            option: { subtitle },
-            template: { $subtitle, $video, $track },
-        } = this.art;
-
-        if (!$track) {
-            const $track = document.createElement('track');
-            $track.default = true;
-            $track.kind = 'metadata';
-            $video.appendChild($track);
-            this.art.template.$track = $track;
-            proxy(this.textTrack, 'cuechange', this.update.bind(this));
-        }
-
-        return fetch(url)
-            .then((response) => response.arrayBuffer())
-            .then((buffer) => {
-                const decoder = new TextDecoder(opt.encoding || subtitle.encoding);
-                const text = decoder.decode(buffer);
-
-                this.art.emit('subtitleLoad', url);
-                switch (opt.ext || getExt(url)) {
-                    case 'srt':
-                        return vttToBlob(srtToVtt(text));
-                    case 'ass':
-                        return vttToBlob(assToVtt(text));
-                    case 'vtt':
-                        return vttToBlob(text);
-                    default:
-                        return url;
-                }
-            })
-            .then((subUrl) => {
-                $subtitle.innerHTML = '';
-                if (this.url === subUrl) return subUrl;
-                URL.revokeObjectURL(this.url);
-                this.art.template.$track.src = subUrl;
-                return subUrl;
-            })
-            .catch((err) => {
-                notice.show = err;
-                throw err;
-            });
-    }
+      })
+      .then((subUrl) => {
+        $subtitle.innerHTML = ''
+        if (this.url === subUrl)
+          return subUrl
+        URL.revokeObjectURL(this.url)
+        this.createTrack('metadata', subUrl)
+        return subUrl
+      })
+      .catch((err) => {
+        $subtitle.innerHTML = ''
+        notice.show = err
+        throw err
+      })
+  }
 }

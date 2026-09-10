@@ -1,306 +1,200 @@
-export = Artplayer;
+import type { Component } from './component'
+import type { Config } from './config'
+import type { Events } from './events'
+import type { I18n } from './i18n'
+import type { Icons } from './icons'
+import type { Option } from './option'
+import type { Player } from './player'
+import type { Setting, SettingOption } from './setting'
+import type { Subtitle } from './subtitle'
+import type { Template } from './template'
+import type { Utils } from './utils'
 
-interface ComponentOption {
-    html: string | HTMLElement;
-    disable?: boolean;
-    name?: string;
-    index?: number;
-    style?: object;
-    click?: Function;
-    mounted?: Function;
-    tooltip?: string;
-    position?: 'top' | 'left' | 'right';
-    selector?: {
-        default?: boolean;
-        html: string;
-    }[];
-    onSelect?: Function;
+export type {
+  Config,
+  Events,
+  I18n,
+  Icons,
+  Option,
+  Player,
+  Setting,
+  SettingOption,
+  Subtitle,
+  Template,
+  Utils,
 }
 
-interface Component {
-    readonly id: number;
-    readonly name: string | void;
-    readonly $parent: HTMLElement | void;
-    get show(): boolean;
-    set show(state: boolean);
-    set toggle(state: boolean);
-    add(option: ComponentOption): HTMLElement;
-}
+export default class Artplayer extends Player {
+  constructor(option: Option, readyCallback?: (this: Artplayer, art: Artplayer) => unknown)
 
-interface Option {
-    container: string | HTMLElement;
-    url: string;
-    poster?: string;
-    title?: string;
-    type?: string;
-    theme?: string;
-    lang?: 'en' | 'zh-cn' | 'zh-tw';
-    volume?: number;
-    isLive?: boolean;
-    muted?: boolean;
-    autoplay?: boolean;
-    autoSize?: boolean;
-    autoMini?: boolean;
-    loop?: boolean;
-    flip?: boolean;
-    rotate?: boolean;
-    playbackRate?: boolean;
-    aspectRatio?: boolean;
-    screenshot?: boolean;
-    setting?: boolean;
-    hotkey?: boolean;
-    pip?: boolean;
-    mutex?: boolean;
-    backdrop?: boolean;
-    fullscreen?: boolean;
-    fullscreenWeb?: boolean;
-    subtitleOffset?: boolean;
-    miniProgressBar?: boolean;
-    localVideo?: boolean;
-    localSubtitle?: boolean;
-    useSSR?: boolean;
-    plugins?: Function[];
-    whitelist?: (string | Function | RegExp)[];
-    layers?: ComponentOption[];
-    contextmenu?: ComponentOption[];
-    controls?: ComponentOption[];
-    settings?: ComponentOption[];
-    quality?: {
-        default?: boolean;
-        html: string;
-        url: string;
-    }[];
-    highlight?: {
-        time: number;
-        text: string;
-    }[];
-    thumbnails?: {
-        url: string;
-        number?: number;
-        width?: number;
-        height?: number;
-        column?: number;
-    };
-    subtitle?: {
-        url: string;
-        style: object;
-        encoding: string;
-        bilingual: boolean;
-    };
-    moreVideoAttr?: object;
-    icons?: {
-        [propName: string]: string | HTMLElement;
-    };
-    customType?: {
-        [propName: string]: Function;
-    };
-}
+  static readonly instances: Artplayer[]
+  static readonly version: string
+  static readonly env: 'development' | 'production'
+  static readonly build: string
+  static readonly config: Config
+  static readonly utils: Utils
+  static readonly scheme: Record<keyof Option, unknown>
+  static readonly Emitter: new (...args: unknown[]) => unknown
+  static readonly validator: <T extends object>(option: T, scheme: object) => T
+  static readonly kindOf: (item: unknown) => string
+  static readonly html: Artplayer['template']['html']
+  static readonly option: Option
 
-type AspectRatio = 'default' | '4:3' | '16:9' | void;
-type PlaybackRate = 0.5 | 0.75 | 1.0 | 1.25 | 1.5 | 1.75 | 2.0 | void;
-type Rotate = -270 | -180 | -90 | 0 | 90 | 180 | 270 | void;
-type Flip = 'normal' | 'horizontal' | 'vertical' | void;
+  static STYLE: string
+  static DEBUG: boolean
+  static CONTEXTMENU: boolean
+  static NOTICE_TIME: number
+  static SETTING_WIDTH: number
+  static SETTING_ITEM_WIDTH: number
+  static SETTING_ITEM_HEIGHT: number
+  static RESIZE_TIME: number
+  static SCROLL_TIME: number
+  static SCROLL_GAP: number
+  static AUTO_PLAYBACK_MAX: number
+  static AUTO_PLAYBACK_MIN: number
+  static AUTO_PLAYBACK_TIMEOUT: number
+  static RECONNECT_TIME_MAX: number
+  static RECONNECT_SLEEP_TIME: number
+  static CONTROL_HIDE_TIME: number
+  static DBCLICK_TIME: number
+  static DBCLICK_FULLSCREEN: boolean
+  static MOBILE_DBCLICK_PLAY: boolean
+  static MOBILE_CLICK_PLAY: boolean
+  static AUTO_ORIENTATION_TIME: number
+  static INFO_LOOP_TIME: number
+  static FAST_FORWARD_VALUE: number
+  static FAST_FORWARD_TIME: number
+  static TOUCH_MOVE_RATIO: number
+  static VOLUME_STEP: number
+  static SEEK_STEP: number
+  static PLAYBACK_RATE: number[]
+  static ASPECT_RATIO: string[]
+  static FLIP: string[]
+  static FULLSCREEN_WEB_IN_BODY: boolean
+  static LOG_VERSION: boolean
+  static USE_RAF: boolean
+  static REMOVE_SRC_WHEN_DESTROY: boolean
 
-declare class Player {
-    get aspectRatio(): AspectRatio;
-    set aspectRatio(ratio: AspectRatio);
-    get playbackRate(): PlaybackRate;
-    set playbackRate(rate: PlaybackRate);
-    get rotate(): Rotate;
-    set rotate(deg: Rotate);
-    get autoSize(): boolean;
-    set autoSize(state: boolean);
-    get currentTime(): number;
-    set currentTime(time: number);
-    get duration(): number;
-    get played(): number;
-    get playing(): boolean;
-    get flip(): Flip;
-    set flip(state: Flip);
-    get fullscreen(): boolean;
-    set fullscreen(state: boolean);
-    set fullscreenToggle(state: boolean);
-    get fullscreenWeb(): boolean;
-    set fullscreenWeb(state: boolean);
-    set fullscreenWebToggle(state: boolean);
-    get loaded(): number;
-    get loop(): number[];
-    set loop(value: number[]);
-    get mini(): boolean;
-    set mini(state: boolean);
-    get pip(): boolean;
-    set pip(state: boolean);
-    get poster(): string;
-    set poster(url: string);
-    get rect(): DOMRect;
-    get bottom(): number;
-    get height(): number;
-    get left(): number;
-    get right(): number;
-    get top(): number;
-    get width(): number;
-    get x(): number;
-    get y(): number;
-    set seek(time: number);
-    set forward(time: number);
-    set backward(time: number);
-    get url(): string;
-    set url(url: string);
-    get volume(): number;
-    set volume(percentage: number);
-    get muted(): boolean;
-    set muted(state: boolean);
-    pause(): any;
-    play(): any;
-    toggle(): any;
-    switchUrl(): Promise<string>;
-    switchQuality(): Promise<string>;
-    getDataURL(): Promise<string>;
-    getBlobUrl(): Promise<string>;
-    screenshot(): Promise<string>;
-}
+  readonly id: number
+  readonly option: Option
+  readonly isLock: boolean
+  readonly isReady: boolean
+  readonly isFocus: boolean
+  readonly isInput: boolean
+  readonly isRotate: boolean
+  readonly isDestroy: boolean
 
-declare class Artplayer extends Player {
-    constructor(option: Option);
+  flv?: unknown
+  m3u8?: unknown
+  hls?: unknown
+  ts?: unknown
+  mpd?: unknown
+  torrent?: unknown
 
-    static instances: Artplayer[];
-    static version: string;
-    static env: string;
-    static build: string;
-    static config: object;
-    static utils: object;
-    static scheme: object;
-    static Emitter: Function;
-    static validator: Function;
-    static kindOf: Function;
-    static html: string;
-    static option: Option;
+  on<T extends keyof Events>(name: T, fn: (...args: Events[T]) => unknown, ctx?: object): this
+  on(name: string, fn: (...args: unknown[]) => unknown, ctx?: object): this
 
-    readonly id: number;
-    readonly option: Option;
-    readonly isFocus: boolean;
-    readonly isDestroy: boolean;
-    readonly userAgent: string;
-    readonly isMobile: boolean;
-    readonly isWechat: boolean;
+  once<T extends keyof Events>(name: T, fn: (...args: Events[T]) => unknown, ctx?: object): this
+  once(name: string, fn: (...args: unknown[]) => unknown, ctx?: object): this
 
-    on(name: string, fn: Function, ctx?: object): void;
-    once(name: string, fn: Function, ctx?: object): void;
-    emit(name: string): void;
-    off(name: string, callback?: Function): void;
-    query(selector: string): HTMLElement;
-    destroy(removeHtml?: boolean): void;
+  emit<T extends keyof Events>(name: T, ...args: Events[T]): this
+  emit(name: string, ...args: unknown[]): this
 
-    readonly template: {
-        query(str: string): HTMLElement;
-        readonly $container: HTMLElement;
-        readonly $original: HTMLElement;
-        readonly $player: HTMLElement;
-        readonly $video: HTMLElement;
-        readonly $poster: HTMLElement;
-        readonly $subtitle: HTMLElement;
-        readonly $danmuku: HTMLElement;
-        readonly $bottom: HTMLElement;
-        readonly $progress: HTMLElement;
-        readonly $controls: HTMLElement;
-        readonly $controlsLeft: HTMLElement;
-        readonly $controlsRight: HTMLElement;
-        readonly $layer: HTMLElement;
-        readonly $loading: HTMLElement;
-        readonly $notice: HTMLElement;
-        readonly $noticeInner: HTMLElement;
-        readonly $mask: HTMLElement;
-        readonly $state: HTMLElement;
-        readonly $setting: HTMLElement;
-        readonly $settingInner: HTMLElement;
-        readonly $settingBody: HTMLElement;
-        readonly $info: HTMLElement;
-        readonly $infoPanel: HTMLElement;
-        readonly $infoClose: HTMLElement;
-        readonly $miniHeader: HTMLElement;
-        readonly $miniTitle: HTMLElement;
-        readonly $miniClose: HTMLElement;
-        readonly $contextmenu: HTMLElement;
-    };
+  off<T extends keyof Events>(name: T, callback?: (...args: Events[T]) => unknown): this
+  off(name: string, callback?: (...args: unknown[]) => unknown): this
 
-    readonly events: {
-        proxy(target: HTMLElement, name: string, callback: Function, option?: object): Function;
-        hover(target: HTMLElement, mouseenter?: Function, mouseleave?: Function): Function;
-        loadImg(target: HTMLImageElement | string): Promise<HTMLImageElement>;
-    };
+  query: Artplayer['template']['query']
+  proxy: Artplayer['events']['proxy']
+  video: Artplayer['template']['$video']
 
-    readonly whitelist: {
-        readonly state: boolean;
-    };
+  e: { [K in keyof Events]?: { fn: (...args: Events[K]) => unknown, ctx: unknown }[] }
 
-    readonly storage: {
-        readonly name: string;
-        readonly settings: object;
-        get(key: string): any;
-        set(key: string, value: any): void;
-        del(key: string): any;
-        clean(): any;
-    };
+  destroy(removeHtml?: boolean): void
+  reset(): void
 
-    readonly icons: {
-        readonly loading: HTMLElement;
-        readonly state: HTMLElement;
-        readonly play: HTMLElement;
-        readonly pause: HTMLElement;
-        readonly volume: HTMLElement;
-        readonly volumeClose: HTMLElement;
-        readonly subtitle: HTMLElement;
-        readonly screenshot: HTMLElement;
-        readonly setting: HTMLElement;
-        readonly fullscreen: HTMLElement;
-        readonly fullscreenWeb: HTMLElement;
-        readonly pip: HTMLElement;
-    };
+  readonly template: {
+    get html(): string
+    query: <T extends Element = Element>(selector: string) => T | null
+  } & Template
 
-    readonly hotkey: {
-        add(key: number, event: Function): Artplayer['hotkey'];
-    };
+  readonly events: {
+    proxy: {
+      (target: EventTarget, eventName: string, handler: (event: Event) => void, options?: boolean | AddEventListenerOptions): () => void
+      (target: EventTarget, eventName: string[], handler: (event: Event) => void, options?: boolean | AddEventListenerOptions): Array<() => void>
+    }
+    hover: (element: HTMLElement, mouseenter?: (event: Event) => any, mouseleave?: (event: Event) => any) => void
+    remove: (destroyEvent: () => void) => void
+    destroy: () => void
+    bindGlobalEvents: (source?: { window?: Window, document?: Document }) => void
+  }
 
-    readonly plugins: {
-        readonly id: number;
-        add(plugin: Function): Artplayer['plugins'];
-    };
+  readonly storage: {
+    name: string
+    settings: Record<string, unknown>
+    get: {
+      (key: string): unknown
+      (): Record<string, unknown>
+    }
+    set: (key: string, value: unknown) => void
+    del: (key: string) => void
+    clear: () => void
+  }
 
-    readonly i18n: {
-        readonly languages: object;
-        get(key: string): string;
-        update(language: object): void;
-    };
+  readonly icons: Icons
 
-    readonly notice: {
-        time: number;
-        set show(msg: string);
-    };
+  readonly i18n: {
+    languages: I18n
+    language: Partial<Record<string, string>>
+    init: () => void
+    get: (key: string) => string
+    update: (language: Partial<I18n>) => void
+  }
 
-    readonly subtitle: {
-        get show(): boolean;
-        set show(state: boolean);
-        set toggle(state: boolean);
-        get url(): string;
-        style(name: string | object, value?: string): HTMLElement;
-        switch(url: string, option?: object): Promise<string>;
-    };
+  readonly notice: {
+    timer: number | null
+    get show(): string | Error | false | ''
+    set show(msg: string | Error | false | '')
+    destroy: () => void
+  }
 
-    readonly mobile: object;
+  readonly layers: Record<string, HTMLElement | undefined> & Component
+  readonly controls: Record<string, HTMLElement | undefined> & Component
+  readonly contextmenu: Record<string, HTMLElement | undefined> & Component
 
-    readonly player: Player;
+  readonly subtitle: {
+    get url(): string
+    set url(url: string)
+    get textTrack(): TextTrack | undefined
+    get activeCues(): VTTCue[]
+    get cues(): VTTCue[]
+    style: (name: string | Partial<CSSStyleDeclaration>, value?: string) => void
+    switch: (url: string, option?: Subtitle) => Promise<string>
+    init: (subtitle: Subtitle) => Promise<string | null | undefined>
+  } & Component
 
-    readonly layers: Component;
+  readonly info: Component
+  readonly loading: Component
 
-    readonly controls: Component;
+  readonly hotkey: {
+    keys: Record<string, ((event: KeyboardEvent) => any)[]>
+    add: (key: string, callback: (this: Artplayer, event: KeyboardEvent) => any) => Artplayer['hotkey']
+    remove: (key: string, callback: (event: KeyboardEvent) => any) => Artplayer['hotkey']
+  }
 
-    readonly contextmenu: Component;
+  readonly mask: Component
 
-    readonly info: Component;
+  readonly setting: {
+    option: SettingOption[]
+    updateStyle: (width?: number) => void
+    find: (name: string) => SettingOption | undefined
+    add: (setting: Setting) => Artplayer['setting']
+    update: (settings: Setting) => Artplayer['setting']
+    remove: (name: string) => Artplayer['setting']
+  } & Component
 
-    readonly loading: Component;
-
-    readonly mask: Component;
-
-    readonly setting: Component;
+  readonly plugins: {
+    add: (
+      plugin: (this: Artplayer, art: Artplayer) => unknown | Promise<unknown>,
+    ) => Promise<Artplayer['plugins']>
+  } & Record<string, unknown>
 }

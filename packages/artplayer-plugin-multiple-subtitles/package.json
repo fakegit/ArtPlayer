@@ -1,0 +1,37 @@
+{
+  "name": "artplayer-plugin-multiple-subtitles",
+  "version": "1.2.0",
+  "description": "multiple subtitles plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-multiple-subtitles.d.ts",
+      "import": "./dist/artplayer-plugin-multiple-subtitles.mjs",
+      "require": "./dist/artplayer-plugin-multiple-subtitles.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-multiple-subtitles.d.ts",
+      "import": "./dist/artplayer-plugin-multiple-subtitles.legacy.js",
+      "require": "./dist/artplayer-plugin-multiple-subtitles.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-multiple-subtitles.js",
+  "module": "./dist/artplayer-plugin-multiple-subtitles.mjs",
+  "types": "./types/artplayer-plugin-multiple-subtitles.d.ts",
+  "legacy": "./dist/artplayer-plugin-multiple-subtitles.legacy.js",
+  "browserslist": "last 1 Chrome version"
+}

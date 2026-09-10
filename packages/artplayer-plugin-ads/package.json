@@ -1,0 +1,37 @@
+{
+  "name": "artplayer-plugin-ads",
+  "version": "2.1.0",
+  "description": "Ads plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-ads.d.ts",
+      "import": "./dist/artplayer-plugin-ads.mjs",
+      "require": "./dist/artplayer-plugin-ads.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-ads.d.ts",
+      "import": "./dist/artplayer-plugin-ads.legacy.js",
+      "require": "./dist/artplayer-plugin-ads.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-ads.js",
+  "module": "./dist/artplayer-plugin-ads.mjs",
+  "types": "./types/artplayer-plugin-ads.d.ts",
+  "legacy": "./dist/artplayer-plugin-ads.legacy.js",
+  "browserslist": "last 1 Chrome version"
+}

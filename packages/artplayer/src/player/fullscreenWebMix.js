@@ -1,33 +1,41 @@
-import { addClass, removeClass, hasClass, def } from '../utils';
+import { addClass, append, def, hasClass, removeClass, setStyle } from '../utils'
 
-export default function fullscreenWebMix(art, player) {
-    const { $player } = art.template;
+export default function fullscreenWebMix(art) {
+  const {
+    constructor,
+    template: { $container, $player },
+  } = art
 
-    def(player, 'fullscreenWeb', {
-        get() {
-            return hasClass($player, 'art-fullscreen-web');
-        },
-        set(value) {
-            if (value) {
-                addClass($player, 'art-fullscreen-web');
-                player.aspectRatioReset = true;
-                art.emit('resize');
-                art.emit('fullscreenWeb', true);
-            } else {
-                removeClass($player, 'art-fullscreen-web');
-                player.aspectRatioReset = true;
-                player.autoSize = art.option.autoSize;
-                art.emit('resize');
-                art.emit('fullscreenWeb');
-            }
-        },
-    });
+  let cssText = ''
+  def(art, 'fullscreenWeb', {
+    get() {
+      return hasClass($player, 'art-fullscreen-web')
+    },
+    set(value) {
+      if (value) {
+        cssText = $player.style.cssText
+        if (constructor.FULLSCREEN_WEB_IN_BODY) {
+          append(document.body, $player)
+        }
+        art.state = 'fullscreenWeb'
+        setStyle($player, 'width', '100%')
+        setStyle($player, 'height', '100%')
+        addClass($player, 'art-fullscreen-web')
+        art.emit('fullscreenWeb', true)
+      }
+      else {
+        if (constructor.FULLSCREEN_WEB_IN_BODY) {
+          append($container, $player)
+        }
+        if (cssText) {
+          $player.style.cssText = cssText
+          cssText = ''
+        }
+        removeClass($player, 'art-fullscreen-web')
+        art.emit('fullscreenWeb', false)
+      }
 
-    def(player, 'fullscreenWebToggle', {
-        set(value) {
-            if (value) {
-                player.fullscreenWeb = !player.fullscreenWeb;
-            }
-        },
-    });
+      art.emit('resize')
+    },
+  })
 }

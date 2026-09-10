@@ -1,38 +1,42 @@
-import { inverseClass, queryAll } from '../utils';
+import { capitalize } from '../utils'
 
-export default function flip(option) {
-    return art => {
-        const { i18n, player } = art;
-        return {
-            ...option,
-            html: `
-                <div class="art-setting-header">${i18n.get('Flip')}</div>
-                <div class="art-setting-radio">
-                    <div class="art-radio-item current">
-                        <button type="button" data-value="normal">${i18n.get('Normal')}</button>
-                    </div>
-                    <div class="art-radio-item">
-                        <button type="button" data-value="horizontal">${i18n.get('Horizontal')}</button>
-                    </div>
-                    <div class="art-radio-item">
-                        <button type="button" data-value="vertical">${i18n.get('Vertical')}</button>
-                    </div>
-                </div>
-            `,
-            click: (setting, event) => {
-                const { value } = event.target.dataset;
-                if (value) {
-                    player.flip = value;
-                }
-            },
-            mounted: $setting => {
-                art.on('flip', flip => {
-                    const $current = queryAll('button', $setting).find(item => item.dataset.value === flip);
-                    if ($current) {
-                        inverseClass($current.parentElement, 'current');
-                    }
-                });
-            },
-        };
-    };
+export default function flip(art) {
+  const {
+    i18n,
+    icons,
+    constructor: { SETTING_ITEM_WIDTH, FLIP },
+  } = art
+
+  function getI18n(value) {
+    return i18n.get(capitalize(value))
+  }
+
+  function update() {
+    const target = art.setting.find(`flip-${art.flip}`)
+    art.setting.check(target)
+  }
+
+  return {
+    width: SETTING_ITEM_WIDTH,
+    name: 'flip',
+    html: i18n.get('Video Flip'),
+    tooltip: getI18n(art.flip),
+    icon: icons.flip,
+    selector: FLIP.map((item) => {
+      return {
+        value: item,
+        name: `flip-${item}`,
+        default: item === art.flip,
+        html: getI18n(item),
+      }
+    }),
+    onSelect(item) {
+      art.flip = item.value
+      return item.html
+    },
+    mounted: () => {
+      update()
+      art.on('flip', () => update())
+    },
+  }
 }

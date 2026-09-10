@@ -1,38 +1,40 @@
-import { query } from '../utils';
+export default function playbackRate(art) {
+  const {
+    i18n,
+    icons,
+    constructor: { SETTING_ITEM_WIDTH, PLAYBACK_RATE },
+  } = art
 
-export default function playbackRate(option) {
-    return art => {
-        const {
-            i18n,
-            player,
-            events: { proxy },
-        } = art;
-        return {
-            ...option,
-            html: `
-                <div class="art-setting-header">
-                    ${i18n.get('Play speed')}: <span class="art-subtitle-value">1.0</span>x
-                </div>
-                <div class="art-setting-range">
-                    <input class="art-subtitle-range" value="1" type="range" min="0.5" max="2" step="0.25">
-                </div>
-            `,
-            mounted: $setting => {
-                const $range = query('.art-setting-range input', $setting);
-                const $value = query('.art-subtitle-value', $setting);
-                proxy($range, 'change', () => {
-                    const { value } = $range;
-                    $value.innerText = value;
-                    player.playbackRate = Number(value);
-                });
+  function getI18n(value) {
+    return value === 1.0 ? i18n.get('Normal') : value.toFixed(1)
+  }
 
-                art.on('playbackRate', rate => {
-                    if (rate && $range.value !== rate) {
-                        $range.value = rate;
-                        $value.innerText = rate;
-                    }
-                });
-            },
-        };
-    };
+  function update() {
+    const target = art.setting.find(`playback-rate-${art.playbackRate}`)
+    art.setting.check(target)
+  }
+
+  return {
+    width: SETTING_ITEM_WIDTH,
+    name: 'playback-rate',
+    html: i18n.get('Play Speed'),
+    tooltip: getI18n(art.playbackRate),
+    icon: icons.playbackRate,
+    selector: PLAYBACK_RATE.map((item) => {
+      return {
+        value: item,
+        name: `playback-rate-${item}`,
+        default: item === art.playbackRate,
+        html: getI18n(item),
+      }
+    }),
+    onSelect(item) {
+      art.playbackRate = item.value
+      return item.html
+    },
+    mounted: () => {
+      update()
+      art.on('video:ratechange', () => update())
+    },
+  }
 }

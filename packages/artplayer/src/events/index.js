@@ -1,75 +1,71 @@
-import { ArtPlayerError } from '../utils/error';
-import clickInit from './clickInit';
-import hoverInit from './hoverInit';
-import mousemoveInit from './mousemoveInit';
-import resizeInit from './resizeInit';
-import gestureInit from './gestureInit';
-import viewInit from './viewInit';
+import clickInit from './clickInit'
+import gestureInit from './gestureInit'
+import globalInit from './globalInit'
+import hoverInit from './hoverInit'
+import moveInit from './moveInit'
+import resizeInit from './resizeInit'
+import updateInit from './updateInit'
+import viewInit from './viewInit'
 
 export default class Events {
-    constructor(art) {
-        this.destroyEvents = [];
-        this.proxy = this.proxy.bind(this);
-        this.hover = this.hover.bind(this);
-        this.loadImg = this.loadImg.bind(this);
+  constructor(art) {
+    this.destroyEvents = new Set()
+    this.proxy = this.proxy.bind(this)
+    this.hover = this.hover.bind(this)
 
-        if (art.whitelist.state) {
-            art.once('ready', () => {
-                clickInit(art, this);
-                hoverInit(art, this);
-                mousemoveInit(art, this);
-                resizeInit(art, this);
-                gestureInit(art, this);
-                viewInit(art, this);
-            });
-        }
+    clickInit(art, this)
+    hoverInit(art, this)
+    moveInit(art, this)
+    resizeInit(art, this)
+    gestureInit(art, this)
+    viewInit(art, this)
+    globalInit(art, this)
+    updateInit(art, this)
+  }
+
+  proxy(target, name, callback, option = {}) {
+    if (Array.isArray(name)) {
+      return name.map(item => this.proxy(target, item, callback, option))
     }
 
-    proxy(target, name, callback, option = {}) {
-        if (Array.isArray(name)) {
-            return name.map((item) => this.proxy(target, item, callback, option));
-        }
+    target.addEventListener(name, callback, option)
+    const destroy = () => target.removeEventListener(name, callback, option)
+    this.destroyEvents.add(destroy)
+    return destroy
+  }
 
-        target.addEventListener(name, callback, option);
-        const destroy = () => target.removeEventListener(name, callback, option);
-        this.destroyEvents.push(destroy);
-        return destroy;
+  hover(target, mouseenter, mouseleave) {
+    if (mouseenter) {
+      this.proxy(target, 'mouseenter', mouseenter)
     }
-
-    hover(target, mouseenter, mouseleave) {
-        if (mouseenter) {
-            this.proxy(target, 'mouseenter', mouseenter);
-        }
-        if (mouseleave) {
-            this.proxy(target, 'mouseleave', mouseleave);
-        }
+    if (mouseleave) {
+      this.proxy(target, 'mouseleave', mouseleave)
     }
+  }
 
-    loadImg(img) {
-        return new Promise((resolve, reject) => {
-            let image;
-
-            if (img instanceof HTMLImageElement) {
-                image = img;
-            } else if (typeof img === 'string') {
-                image = new Image();
-                image.src = img;
-            } else {
-                return reject(new ArtPlayerError('Unable to get Image'));
-            }
-
-            if (image.complete) {
-                return resolve(image);
-            }
-
-            this.proxy(image, 'load', () => resolve(image));
-            this.proxy(image, 'error', () => reject(new ArtPlayerError(`Failed to load Image: ${image.src}`)));
-
-            return resolve(image);
-        });
+  remove(destroyEvent) {
+    if (this.destroyEvents.has(destroyEvent)) {
+      try {
+        destroyEvent()
+      }
+      catch (error) {
+        console.warn('Failed to remove event listener:', error)
+      }
+      finally {
+        this.destroyEvents.delete(destroyEvent)
+      }
     }
+  }
 
-    destroy() {
-        this.destroyEvents.forEach((event) => event());
+  destroy() {
+    for (const destroyEvent of this.destroyEvents) {
+      try {
+        destroyEvent()
+      }
+      catch (error) {
+        console.warn('Failed to destroy event listener:', error)
+      }
     }
+    this.destroyEvents.clear()
+  }
 }

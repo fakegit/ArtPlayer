@@ -1,0 +1,37 @@
+{
+  "name": "artplayer-plugin-asr",
+  "version": "2.1.0",
+  "description": "Asr plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-asr.d.ts",
+      "import": "./dist/artplayer-plugin-asr.mjs",
+      "require": "./dist/artplayer-plugin-asr.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-asr.d.ts",
+      "import": "./dist/artplayer-plugin-asr.legacy.js",
+      "require": "./dist/artplayer-plugin-asr.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-asr.js",
+  "module": "./dist/artplayer-plugin-asr.mjs",
+  "types": "./types/artplayer-plugin-asr.d.ts",
+  "legacy": "./dist/artplayer-plugin-asr.legacy.js",
+  "browserslist": "last 1 Chrome version"
+}

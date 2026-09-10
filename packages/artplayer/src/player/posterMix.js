@@ -1,16 +1,21 @@
-import { def, setStyle } from '../utils';
+import { def, setStyle } from '../utils'
 
-export default function posterMix(art, player) {
-    const {
-        option,
-        template: { $poster },
-    } = art;
+export default function posterMix(art) {
+  const {
+    template: { $poster },
+  } = art
 
-    def(player, 'poster', {
-        get: () => option.poster,
-        set(url) {
-            option.poster = url;
-            setStyle($poster, 'backgroundImage', `url(${url})`);
-        },
-    });
+  def(art, 'poster', {
+    get: () => {
+      try {
+        return $poster.style.backgroundImage.match(/"(.*)"/)[1]
+      }
+      catch {
+        return ''
+      }
+    },
+    set(url) {
+      setStyle($poster, 'backgroundImage', `url(${url})`)
+    },
+  })
 }

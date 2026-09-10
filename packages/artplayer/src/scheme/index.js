@@ -1,106 +1,124 @@
-import { errorHandle } from '../utils';
+import { errorHandle } from '../utils'
 
-const a = 'array';
-const b = 'boolean';
-const s = 'string';
-const n = 'number';
-const o = 'object';
-const f = 'function';
-const r = 'regexp';
+const a = 'array'
+const b = 'boolean'
+const s = 'string'
+const n = 'number'
+const o = 'object'
+const f = 'function'
 
 function validElement(value, type, paths) {
-    return errorHandle(type === s || value instanceof Element, `${paths.join('.')} require '${s}' or 'Element' type`);
+  return errorHandle(
+    type === s || type === n || value instanceof Element,
+    `${paths.join('.')} require '${s}' or 'Element' type`,
+  )
 }
 
-const component = {
-    html: validElement,
-    disable: `?${b}`,
-    name: `?${s}`,
-    index: `?${n}`,
-    style: `?${o}`,
-    click: `?${f}`,
-    mounted: `?${f}`,
-    tooltip: `?${s}`,
-    selector: `?${a}`,
-    onSelect: `?${f}`,
-};
+export const ComponentOption = {
+  html: validElement,
+  disable: `?${b}`,
+  name: `?${s}`,
+  index: `?${n}`,
+  style: `?${o}`,
+  click: `?${f}`,
+  mounted: `?${f}`,
+  tooltip: `?${s}|${n}`,
+  width: `?${n}`,
+  selector: `?${a}`,
+  onSelect: `?${f}`,
+  switch: `?${b}`,
+  onSwitch: `?${f}`,
+  range: `?${a}`,
+  onRange: `?${f}`,
+  onChange: `?${f}`,
+}
 
 export default {
-    container: validElement,
+  id: s,
+  container: validElement,
+  url: s,
+  poster: s,
+  type: s,
+  theme: s,
+  lang: s,
+  volume: n,
+  isLive: b,
+  muted: b,
+  autoplay: b,
+  autoSize: b,
+  autoMini: b,
+  loop: b,
+  flip: b,
+  playbackRate: b,
+  aspectRatio: b,
+  screenshot: b,
+  setting: b,
+  hotkey: b,
+  pip: b,
+  mutex: b,
+  backdrop: b,
+  fullscreen: b,
+  fullscreenWeb: b,
+  subtitleOffset: b,
+  miniProgressBar: b,
+  useSSR: b,
+  playsInline: b,
+  lock: b,
+  gesture: b,
+  fastForward: b,
+  autoPlayback: b,
+  autoOrientation: b,
+  airplay: b,
+  proxy: `?${f}`,
+  plugins: [f],
+  layers: [ComponentOption],
+  contextmenu: [ComponentOption],
+  settings: [ComponentOption],
+  controls: [
+    {
+      ...ComponentOption,
+      position: (value, _, paths) => {
+        const position = ['top', 'left', 'right']
+        return errorHandle(
+          position.includes(value),
+          `${paths.join('.')} only accept ${position.toString()} as parameters`,
+        )
+      },
+    },
+  ],
+  quality: [
+    {
+      default: `?${b}`,
+      html: s,
+      url: s,
+    },
+  ],
+  highlight: [
+    {
+      time: n,
+      text: s,
+    },
+  ],
+  thumbnails: {
     url: s,
-    poster: s,
-    title: s,
+    number: n,
+    column: n,
+    width: n,
+    height: n,
+    scale: n,
+  },
+  subtitle: {
+    url: s,
+    name: s,
     type: s,
-    theme: s,
-    lang: s,
-    volume: n,
-    isLive: b,
-    muted: b,
-    autoplay: b,
-    autoSize: b,
-    autoMini: b,
-    loop: b,
-    flip: b,
-    rotate: b,
-    playbackRate: b,
-    aspectRatio: b,
-    screenshot: b,
-    setting: b,
-    hotkey: b,
-    pip: b,
-    mutex: b,
-    backdrop: b,
-    fullscreen: b,
-    fullscreenWeb: b,
-    subtitleOffset: b,
-    miniProgressBar: b,
-    localVideo: b,
-    localSubtitle: b,
-    useSSR: b,
-    plugins: [f],
-    whitelist: [`${s}|${f}|${r}`],
-    layers: [component],
-    contextmenu: [component],
-    settings: [component],
-    controls: [
-        {
-            ...component,
-            position: (value, _, paths) => {
-                const position = ['top', 'left', 'right'];
-                return errorHandle(
-                    position.includes(value),
-                    `${paths.join('.')} only accept ${position.toString()} as parameters`,
-                );
-            },
-        },
-    ],
-    quality: [
-        {
-            default: `?${b}`,
-            html: s,
-            url: s,
-        },
-    ],
-    highlight: [
-        {
-            time: n,
-            text: s,
-        },
-    ],
-    thumbnails: {
-        url: s,
-        number: n,
-        width: n,
-        height: n,
-        column: n,
-    },
-    subtitle: {
-        url: s,
-        style: o,
-        encoding: s,
-        bilingual: b,
-    },
-    moreVideoAttr: o,
-    icons: o,
-    customType: o,
-};
+    style: o,
+    escape: b,
+    encoding: s,
+    onVttLoad: f,
+  },
+  moreVideoAttr: o,
+  i18n: o,
+  icons: o,
+  cssVar: o,
+  customType: o,
+}

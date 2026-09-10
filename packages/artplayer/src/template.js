@@ -1,38 +1,40 @@
-import { errorHandle, query, addClass, replaceElement } from './utils';
+import { version } from '../package.json'
+import { addClass, errorHandle, isMobile, query, replaceElement, supportsFlex } from './utils'
 
 export default class Template {
-    constructor(art) {
-        this.art = art;
-        this.art.query = this.query.bind(this);
+  constructor(art) {
+    this.art = art
+    const { option, constructor } = art
 
-        if (art.option.container instanceof Element) {
-            this.$container = art.option.container;
-        } else {
-            this.$container = query(art.option.container);
-            errorHandle(this.$container, `No container element found by ${art.option.container}`);
-        }
-
-        const type = this.$container.tagName.toLowerCase();
-        errorHandle(type === 'div', `Unsupported container element type, only support 'div' but got '${type}'`);
-
-        errorHandle(
-            art.constructor.instances.every((ins) => ins.template.$container !== this.$container),
-            'Cannot mount multiple instances on the same dom element',
-        );
-
-        this.$original = this.$container.cloneNode(true);
-
-        if (art.whitelist.state) {
-            this.desktop();
-        } else {
-            this.mobile();
-        }
+    if (option.container instanceof Element) {
+      this.$container = option.container
+    }
+    else {
+      this.$container = query(option.container)
+      errorHandle(this.$container, `No container element found by ${option.container}`)
     }
 
-    static get html() {
-        return `
-          <div class="art-video-player art-subtitle-show art-layer-show">
-            <video class="art-video"></video>
+    errorHandle(supportsFlex(), 'The current browser does not support flex layout')
+
+    const type = this.$container.tagName.toLowerCase()
+    errorHandle(type === 'div', `Unsupported container element type, only support 'div' but got '${type}'`)
+
+    errorHandle(
+      constructor.instances.every(ins => ins.template.$container !== this.$container),
+      'Cannot mount multiple instances on the same dom element',
+    )
+
+    this.query = this.query.bind(this)
+    this.$container.dataset.artId = art.id
+    this.init()
+  }
+
+  static get html() {
+    return `
+          <div class="art-video-player art-subtitle-show art-layer-show art-control-show art-mask-show">
+            <video class="art-video">
+              <track default kind="metadata" src=""></track>
+            </video>
             <div class="art-poster"></div>
             <div class="art-subtitle"></div>
             <div class="art-danmuku"></div>
@@ -44,6 +46,7 @@ export default class Template {
               <div class="art-progress"></div>
               <div class="art-controls">
                 <div class="art-controls-left"></div>
+                <div class="art-controls-center"></div>
                 <div class="art-controls-right"></div>
               </div>
             </div>
@@ -51,20 +54,16 @@ export default class Template {
             <div class="art-notice">
               <div class="art-notice-inner"></div>
             </div>
-            <div class="art-settings">
-              <div class="art-setting-inner">
-                <div class="art-setting-body"></div>
-              </div>
-            </div>
+            <div class="art-settings"></div>
             <div class="art-info">
               <div class="art-info-panel">
                 <div class="art-info-item">
                   <div class="art-info-title">Player version:</div>
-                  <div class="art-info-content">__VERSION__</div>
+                  <div class="art-info-content">${version}</div>
                 </div>
                 <div class="art-info-item">
                   <div class="art-info-title">Video url:</div>
-                  <div class="art-info-content" data-video="src"></div>
+                  <div class="art-info-content" data-video="currentSrc"></div>
                 </div>
                 <div class="art-info-item">
                   <div class="art-info-title">Video volume:</div>
@@ -87,81 +86,72 @@ export default class Template {
               </div>
               <div class="art-info-close">[x]</div>
             </div>
-            <div class="art-mini-header">
-              <div class="art-mini-title"></div>
-              <div class="art-mini-close">×</div>
-            </div>
             <div class="art-contextmenus"></div>
           </div>
-        `;
+        `
+  }
+
+  query(className) {
+    return query(className, this.$container)
+  }
+
+  init() {
+    const { option } = this.art
+
+    if (!option.useSSR) {
+      this.$container.innerHTML = Template.html
     }
 
-    query(className) {
-        return query(className, this.$container);
+    this.$player = this.query('.art-video-player')
+    this.$video = this.query('.art-video')
+    this.$track = this.query('track')
+    this.$poster = this.query('.art-poster')
+    this.$subtitle = this.query('.art-subtitle')
+    this.$danmuku = this.query('.art-danmuku')
+    this.$bottom = this.query('.art-bottom')
+    this.$progress = this.query('.art-progress')
+    this.$controls = this.query('.art-controls')
+    this.$controlsLeft = this.query('.art-controls-left')
+    this.$controlsCenter = this.query('.art-controls-center')
+    this.$controlsRight = this.query('.art-controls-right')
+    this.$layer = this.query('.art-layers')
+    this.$loading = this.query('.art-loading')
+    this.$notice = this.query('.art-notice')
+    this.$noticeInner = this.query('.art-notice-inner')
+    this.$mask = this.query('.art-mask')
+    this.$state = this.query('.art-state')
+    this.$setting = this.query('.art-settings')
+    this.$info = this.query('.art-info')
+    this.$infoPanel = this.query('.art-info-panel')
+    this.$infoClose = this.query('.art-info-close')
+    this.$contextmenu = this.query('.art-contextmenus')
+
+    if (option.proxy) {
+      const video = option.proxy.call(this.art, this.art)
+      errorHandle(
+        video instanceof HTMLVideoElement || video instanceof HTMLCanvasElement,
+        `Function 'option.proxy' needs to return 'HTMLVideoElement' or 'HTMLCanvasElement'`,
+      )
+      replaceElement(video, this.$video)
+      video.className = 'art-video'
+      this.$video = video
     }
 
-    desktop() {
-        const { backdrop, theme, useSSR } = this.art.option;
-
-        if (!useSSR) {
-            this.$container.innerHTML = Template.html;
-        }
-
-        this.$player = this.query('.art-video-player');
-        this.$video = this.query('.art-video');
-        this.$poster = this.query('.art-poster');
-        this.$subtitle = this.query('.art-subtitle');
-        this.$danmuku = this.query('.art-danmuku');
-        this.$bottom = this.query('.art-bottom');
-        this.$progress = this.query('.art-progress');
-        this.$controls = this.query('.art-controls');
-        this.$controlsLeft = this.query('.art-controls-left');
-        this.$controlsRight = this.query('.art-controls-right');
-        this.$layer = this.query('.art-layers');
-        this.$loading = this.query('.art-loading');
-        this.$notice = this.query('.art-notice');
-        this.$noticeInner = this.query('.art-notice-inner');
-        this.$mask = this.query('.art-mask');
-        this.$state = this.query('.art-state');
-        this.$setting = this.query('.art-settings');
-        this.$settingInner = this.query('.art-setting-inner');
-        this.$settingBody = this.query('.art-setting-body');
-        this.$info = this.query('.art-info');
-        this.$infoPanel = this.query('.art-info-panel');
-        this.$infoClose = this.query('.art-info-close');
-        this.$miniHeader = this.query('.art-mini-header');
-        this.$miniTitle = this.query('.art-mini-title');
-        this.$miniClose = this.query('.art-mini-close');
-        this.$contextmenu = this.query('.art-contextmenus');
-
-        this.$player.style.setProperty('--theme', theme);
-
-        if (backdrop) {
-            addClass(this.$settingInner, 'art-backdrop-filter');
-            addClass(this.$contextmenu, 'art-backdrop-filter');
-            addClass(this.$info, 'art-backdrop-filter');
-        }
-
-        if (this.art.isMobile) {
-            addClass(this.$container, 'art-mobile');
-        }
+    if (option.backdrop) {
+      addClass(this.$player, 'art-backdrop')
     }
 
-    mobile() {
-        this.$container.innerHTML = `
-          <div class="art-video-player">
-            <video class="art-video"></video>
-          </div>
-        `;
-        this.$player = this.query('.art-video-player');
-        this.$video = this.query('.art-video');
+    if (isMobile) {
+      addClass(this.$player, 'art-mobile')
     }
+  }
 
-    destroy(removeHtml) {
-        if (removeHtml) {
-            replaceElement(this.$original, this.$container);
-        } else {
-            addClass(this.$player, 'art-destroy');
-        }
+  destroy(removeHtml) {
+    if (removeHtml) {
+      this.$container.innerHTML = ''
     }
+    else {
+      addClass(this.$player, 'art-destroy')
+    }
+  }
 }

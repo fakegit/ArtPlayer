@@ -1,0 +1,45 @@
+{
+  "name": "artplayer-plugin-danmuku-mask",
+  "version": "1.1.0",
+  "description": "Danmuku mask plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-danmuku-mask.d.ts",
+      "import": "./dist/artplayer-plugin-danmuku-mask.mjs",
+      "require": "./dist/artplayer-plugin-danmuku-mask.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-danmuku-mask.d.ts",
+      "import": "./dist/artplayer-plugin-danmuku-mask.legacy.js",
+      "require": "./dist/artplayer-plugin-danmuku-mask.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-danmuku-mask.js",
+  "module": "./dist/artplayer-plugin-danmuku-mask.mjs",
+  "types": "./types/artplayer-plugin-danmuku-mask.d.ts",
+  "legacy": "./dist/artplayer-plugin-danmuku-mask.legacy.js",
+  "browserslist": "last 1 Chrome version",
+  "dependencies": {
+    "@mediapipe/selfie_segmentation": "^0.1.1675465747",
+    "@tensorflow-models/body-segmentation": "^1.0.2",
+    "@tensorflow/tfjs-backend-cpu": "^4.21.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.21.0",
+    "@tensorflow/tfjs-converter": "^4.21.0",
+    "@tensorflow/tfjs-core": "^4.21.0"
+  }
+}

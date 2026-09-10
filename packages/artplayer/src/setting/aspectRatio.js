@@ -1,38 +1,40 @@
-import { inverseClass, queryAll } from '../utils';
+export default function aspectRatio(art) {
+  const {
+    i18n,
+    icons,
+    constructor: { SETTING_ITEM_WIDTH, ASPECT_RATIO },
+  } = art
 
-export default function aspectRatio(option) {
-    return art => {
-        const { i18n, player } = art;
-        return {
-            ...option,
-            html: `
-                <div class="art-setting-header">${i18n.get('Aspect ratio')}</div>
-                <div class="art-setting-radio">
-                    <div class="art-radio-item current">
-                        <button type="button" data-value="default">${i18n.get('Default')}</button>
-                    </div>
-                    <div class="art-radio-item">
-                        <button type="button" data-value="4:3">4:3</button>
-                    </div>
-                    <div class="art-radio-item">
-                        <button type="button" data-value="16:9">16:9</button>
-                    </div>
-                </div>
-            `,
-            click: (setting, event) => {
-                const { value } = event.target.dataset;
-                if (value) {
-                    player.aspectRatio = value;
-                }
-            },
-            mounted: $setting => {
-                art.on('aspectRatio', ratio => {
-                    const $current = queryAll('button', $setting).find(item => item.dataset.value === ratio);
-                    if ($current) {
-                        inverseClass($current.parentElement, 'current');
-                    }
-                });
-            },
-        };
-    };
+  function getI18n(value) {
+    return value === 'default' ? i18n.get('Default') : value
+  }
+
+  function update() {
+    const target = art.setting.find(`aspect-ratio-${art.aspectRatio}`)
+    art.setting.check(target)
+  }
+
+  return {
+    width: SETTING_ITEM_WIDTH,
+    name: 'aspect-ratio',
+    html: i18n.get('Aspect Ratio'),
+    icon: icons.aspectRatio,
+    tooltip: getI18n(art.aspectRatio),
+    selector: ASPECT_RATIO.map((item) => {
+      return {
+        value: item,
+        name: `aspect-ratio-${item}`,
+        default: item === art.aspectRatio,
+        html: getI18n(item),
+      }
+    }),
+    onSelect(item) {
+      art.aspectRatio = item.value
+      return item.html
+    },
+    mounted: () => {
+      update()
+      art.on('aspectRatio', () => update())
+    },
+  }
 }

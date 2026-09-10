@@ -1,37 +1,30 @@
-import { def } from '../utils';
+import { def } from '../utils'
 
-export default function playMix(art, player) {
-    const {
-        i18n,
-        notice,
-        constructor: { instances },
-        option: { mutex },
-        template: { $video },
-    } = art;
+export default function playMix(art) {
+  const {
+    i18n,
+    notice,
+    option,
+    constructor: { instances },
+    template: { $video },
+  } = art
 
-    def(player, 'play', {
-        value() {
-            const promise = $video.play();
+  def(art, 'play', {
+    async value() {
+      const result = await $video.play()
+      notice.show = i18n.get('Play')
+      art.emit('play')
 
-            if (promise.then) {
-                promise.then().catch((err) => {
-                    notice.show = err;
-                    throw err;
-                });
-            }
+      if (option.mutex) {
+        for (let index = 0; index < instances.length; index++) {
+          const instance = instances[index]
+          if (instance !== art) {
+            instance.pause()
+          }
+        }
+      }
 
-            if (mutex) {
-                instances
-                    .filter((item) => item !== art)
-                    .forEach((item) => {
-                        item.player.pause();
-                    });
-            }
-
-            notice.show = i18n.get('Play');
-            art.emit('play');
-
-            return promise;
-        },
-    });
+      return result
+    },
+  })
 }

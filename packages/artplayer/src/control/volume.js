@@ -1,85 +1,79 @@
-import { append, clamp, tooltip, setStyle } from '../utils';
+import { append, getRect, isMobile, setStyle } from '../utils'
 
 export default function volume(option) {
-    return (art) => ({
-        ...option,
-        mounted: ($control) => {
-            const {
-                events: { proxy },
-                icons,
-                player,
-                i18n,
-            } = art;
+  return art => ({
+    ...option,
+    mounted: ($control) => {
+      const { proxy, icons } = art
 
-            let isDroging = false;
-            const panelWidth = 60; // 音量条宽度
-            const handleWidth = 12; // 音量把手宽度
-            const $volume = append($control, icons.volume);
-            const $volumeClose = append($control, icons.volumeClose);
-            const $volumePanel = append($control, '<div class="art-volume-panel"></div>');
-            const $volumeHandle = append($volumePanel, '<div class="art-volume-slider-handle"></div>');
-            tooltip($volume, i18n.get('Mute'));
-            setStyle($volumeClose, 'display', 'none');
+      const $volume = append($control, icons.volume)
+      const $close = append($control, icons.volumeClose)
+      const $panel = append($control, '<div class="art-volume-panel"></div>')
+      const $inner = append($panel, '<div class="art-volume-inner"></div>')
+      const $value = append($inner, `<div class="art-volume-val"></div>`)
+      const $slider = append($inner, `<div class="art-volume-slider"></div>`)
+      const $handle = append($slider, `<div class="art-volume-handle"></div>`)
+      const $loaded = append($handle, `<div class="art-volume-loaded"></div>`)
+      const $indicator = append($slider, `<div class="art-volume-indicator"></div>`)
 
-            if (art.isMobile) {
-                setStyle($volumePanel, 'display', 'none');
-            }
+      function getVolumeFromEvent(event) {
+        const { top, height } = getRect($slider)
+        return 1 - (event.clientY - top) / height
+      }
 
-            function volumeChangeFromEvent(event) {
-                const { left: panelLeft } = $volumePanel.getBoundingClientRect();
-                const percentage =
-                    clamp(event.pageX - panelLeft - handleWidth / 2, 0, panelWidth - handleWidth / 2) /
-                    (panelWidth - handleWidth);
-                return percentage;
-            }
+      function update() {
+        if (art.muted || art.volume === 0) {
+          setStyle($volume, 'display', 'none')
+          setStyle($close, 'display', 'flex')
+          setStyle($indicator, 'top', '100%')
+          setStyle($loaded, 'top', '100%')
+          $value.textContent = 0
+        }
+        else {
+          const percentage = art.volume * 100
+          setStyle($volume, 'display', 'flex')
+          setStyle($close, 'display', 'none')
+          setStyle($indicator, 'top', `${100 - percentage}%`)
+          setStyle($loaded, 'top', `${100 - percentage}%`)
+          $value.textContent = Math.floor(percentage)
+        }
+      }
 
-            function setVolumeHandle(percentage = 0.7) {
-                if (player.muted || percentage === 0) {
-                    setStyle($volume, 'display', 'none');
-                    setStyle($volumeClose, 'display', 'flex');
-                    setStyle($volumeHandle, 'left', '0');
-                } else {
-                    const width = (panelWidth - handleWidth) * percentage;
-                    setStyle($volume, 'display', 'flex');
-                    setStyle($volumeClose, 'display', 'none');
-                    setStyle($volumeHandle, 'left', `${width}px`);
-                }
-            }
+      update()
+      art.on('video:volumechange', update)
 
-            setVolumeHandle(player.volume);
-            art.on('video:volumechange', () => {
-                setVolumeHandle(player.volume);
-            });
+      proxy($volume, 'click', () => {
+        art.muted = true
+      })
 
-            proxy($volume, 'click', () => {
-                player.muted = true;
-            });
+      proxy($close, 'click', () => {
+        art.muted = false
+      })
 
-            proxy($volumeClose, 'click', () => {
-                player.muted = false;
-            });
+      if (isMobile) {
+        setStyle($panel, 'display', 'none')
+      }
+      else {
+        let isDragging = false
 
-            proxy($volumePanel, 'click', (event) => {
-                player.muted = false;
-                player.volume = volumeChangeFromEvent(event);
-            });
+        proxy($slider, 'mousedown', (event) => {
+          isDragging = event.button === 0
+          art.volume = getVolumeFromEvent(event)
+        })
 
-            proxy($volumeHandle, 'mousedown', () => {
-                isDroging = true;
-            });
+        art.on('document:mousemove', (event) => {
+          if (isDragging) {
+            art.muted = false
+            art.volume = getVolumeFromEvent(event)
+          }
+        })
 
-            proxy($control, 'mousemove', (event) => {
-                if (isDroging) {
-                    player.muted = false;
-                    player.volume = volumeChangeFromEvent(event);
-                }
-            });
-
-            proxy(document, 'mouseup', () => {
-                if (isDroging) {
-                    isDroging = false;
-                }
-            });
-        },
-    });
+        art.on('document:mouseup', () => {
+          if (isDragging) {
+            isDragging = false
+          }
+        })
+      }
+    },
+  })
 }

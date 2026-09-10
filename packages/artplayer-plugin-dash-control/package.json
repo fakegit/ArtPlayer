@@ -1,0 +1,37 @@
+{
+  "name": "artplayer-plugin-dash-control",
+  "version": "1.1.0",
+  "description": "Dash control plugin for ArtPlayer",
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhw2590582/ArtPlayer/issues"
+  },
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer-plugin-dash-control.d.ts",
+      "import": "./dist/artplayer-plugin-dash-control.mjs",
+      "require": "./dist/artplayer-plugin-dash-control.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer-plugin-dash-control.d.ts",
+      "import": "./dist/artplayer-plugin-dash-control.legacy.js",
+      "require": "./dist/artplayer-plugin-dash-control.legacy.js"
+    }
+  },
+  "main": "./dist/artplayer-plugin-dash-control.js",
+  "module": "./dist/artplayer-plugin-dash-control.mjs",
+  "types": "./types/artplayer-plugin-dash-control.d.ts",
+  "legacy": "./dist/artplayer-plugin-dash-control.legacy.js",
+  "browserslist": "last 1 Chrome version"
+}

@@ -1,43 +1,93 @@
-export function getMode(key) {
-    switch (key) {
-        case 1:
-        case 2:
-        case 3:
-            return 0;
-        case 4:
-        case 5:
-            return 1;
-        default:
-            return 0;
-    }
+function getMode(key) {
+  switch (key) {
+    case 1:
+    case 2:
+    case 3:
+      return 0
+    case 4:
+      return 2
+    case 5:
+      return 1
+    default:
+      return 0
+  }
 }
 
-export function bilibiliDanmuParseFromXml(xmlString) {
-    if (typeof xmlString !== 'string') return [];
-    const srtList = xmlString.match(/<d([\S ]*?>[\S ]*?)<\/d>/gi);
-    return srtList && srtList.length
-        ? srtList.map((item) => {
-              const [, attrStr, text] = item.match(/<d p="(.+)">(.+)<\/d>/);
-              const attr = attrStr.split(',');
-              return attr.length === 8 && text.trim()
-                  ? {
-                        text,
-                        time: Number(attr[0]),
-                        mode: getMode(Number(attr[1])),
-                        fontSize: Number(attr[2]),
-                        color: `#${Number(attr[3]).toString(16)}`,
-                        timestamp: Number(attr[4]),
-                        pool: Number(attr[5]),
-                        userID: attr[6],
-                        rowID: Number(attr[7]),
-                    }
-                  : null;
-          })
-        : [];
+function bilibiliDanmuParseFromXml(xmlString) {
+  if (typeof xmlString !== 'string')
+    return []
+  const reg = /<d[^>]*?p="(?<p>[^"]+)"[^>]*>(?<text>.*?)<\/d>/gs
+  const matches = xmlString.matchAll(reg)
+  return Array.from(matches)
+    .map((match) => {
+      const attr = match.groups.p.split(',')
+      if (attr.length >= 8) {
+        const text = match.groups.text
+          .trim()
+          .replaceAll('&quot;', '"')
+          .replaceAll('&apos;', '\'')
+          .replaceAll('&lt;', '<')
+          .replaceAll('&gt;', '>')
+          .replaceAll('&amp;', '&')
+
+        return {
+          text,
+          time: Number(attr[0]),
+          mode: getMode(Number(attr[1])),
+          fontSize: Number(attr[2]),
+          color: `#${Number(attr[3]).toString(16)}`,
+          timestamp: Number(attr[4]),
+          pool: Number(attr[5]),
+          userID: attr[6],
+          rowID: Number(attr[7]),
+        }
+      }
+      else {
+        return null
+      }
+    })
+    .filter(Boolean)
+}
+
+function onmessage({ data }) {
+  const { xml, id } = data
+  if (!id || !xml)
+    return
+  const danmus = bilibiliDanmuParseFromXml(xml)
+  globalThis.postMessage({ danmus, id })
+}
+
+function createWorker() {
+  const workerText = `
+        ${getMode.toString()}
+        ${bilibiliDanmuParseFromXml.toString()}
+        onmessage = ${onmessage.toString()}
+    `
+  const blob = new Blob([workerText], { type: 'application/javascript' })
+  return new Worker(URL.createObjectURL(blob))
 }
 
 export function bilibiliDanmuParseFromUrl(url) {
-    return fetch(url)
-        .then((res) => res.text())
-        .then((xmlString) => bilibiliDanmuParseFromXml(xmlString));
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async (resolve) => {
+    const res = await fetch(url)
+    const xml = await res.text()
+
+    try {
+      const worker = createWorker()
+      worker.onmessage = (event) => {
+        const { danmus, id } = event.data
+        if (!id || !danmus)
+          return
+        resolve(danmus)
+        worker.terminate()
+      }
+      worker.postMessage({ xml, id: Date.now() })
+    }
+    catch (error) {
+      console.error('Error parsing Bilibili Danmu:', error)
+      const danmus = bilibiliDanmuParseFromXml(xml)
+      resolve(danmus)
+    }
+  })
 }

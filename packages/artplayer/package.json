@@ -1,30 +1,55 @@
 {
   "name": "artplayer",
-  "version": "4.0.2",
-  "expose": "Artplayer",
+  "version": "5.4.1",
   "description": "ArtPlayer.js is a modern and full featured HTML5 video player",
-  "main": "dist/artplayer.js",
-  "types": "types/artplayer.d.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "author": "Harvey Zhao <laozhaochaguan@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://artplayer.org",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhw2590582/ArtPlayer.git"
   },
-  "keywords": [
-    "video",
-    "player"
-  ],
-  "author": "Harvey Zack <laozhaochaguan@gmail.com>",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/zhw2590582/ArtPlayer/issues"
   },
-  "homepage": "https://github.com/zhw2590582/ArtPlayer#readme",
-  "dependencies": {
-    "option-validator": "^2.0.6",
-    "screenfull": "^5.1.0"
+  "keywords": [
+    "html5",
+    "video",
+    "player"
+  ],
+  "exports": {
+    ".": {
+      "types": "./types/artplayer.d.ts",
+      "import": "./dist/artplayer.mjs",
+      "require": "./dist/artplayer.js"
+    },
+    "./legacy": {
+      "types": "./types/artplayer.d.ts",
+      "import": "./dist/artplayer.legacy.js",
+      "require": "./dist/artplayer.legacy.js"
+    },
+    "./i18n/*": {
+      "types": "./types/i18n.d.ts",
+      "import": "./dist/i18n/*.mjs",
+      "require": "./dist/i18n/*.js"
+    }
   },
-  "gitHead": "5ea211ef738351668e4acace326af4ff6947e2ee"
+  "main": "./dist/artplayer.js",
+  "module": "./dist/artplayer.mjs",
+  "types": "./types/artplayer.d.ts",
+  "typesVersions": {
+    "*": {
+      "i18n/*": [
+        "types/i18n.d.ts"
+      ],
+      "legacy": [
+        "types/artplayer.d.ts"
+      ]
+    }
+  },
+  "legacy": "./dist/artplayer.legacy.js",
+  "browserslist": "last 1 Chrome version",
+  "dependencies": {
+    "option-validator": "^2.0.6"
+  }
 }

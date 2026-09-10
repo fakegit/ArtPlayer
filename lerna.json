@@ -1,15 +1,5 @@
 {
-  "lerna": "3.4.3",
-  "version": "4.0.0",
-  "packages": [
-    "packages/*"
-  ],
-  "command": {
-    "publish": {
-      "ignoreChanges": [
-        "docs/**",
-        "package.json"
-      ]
-    }
-  }
+  "packages": ["packages/*"],
+  "version": "independent",
+  "npmClient": "yarn"
 }

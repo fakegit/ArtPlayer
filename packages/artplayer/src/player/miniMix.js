@@ -1,103 +1,134 @@
-import { append, setStyle, addClass, removeClass, hasClass, def, isInViewport } from '../utils';
+import { addClass, append, createElement, def, getRect, hasClass, isInViewport, removeClass, setStyle, silencePromise } from '../utils'
 
-export default function miniMix(art, player) {
-    const {
-        i18n,
-        option,
-        storage,
-        events: { proxy },
-        template: { $player, $miniClose, $miniTitle, $miniHeader },
-    } = art;
+export default function miniMix(art) {
+  const {
+    icons,
+    proxy,
+    storage,
+    template: { $player, $video },
+  } = art
 
-    let cacheStyle = '';
-    let isDroging = false;
-    let lastPageX = 0;
-    let lastPageY = 0;
-    let lastPlayerLeft = 0;
-    let lastPlayerTop = 0;
+  let isDragging = false
+  let lastPageX = 0
+  let lastPageY = 0
 
-    proxy($miniHeader, 'mousedown', (event) => {
-        isDroging = true;
-        lastPageX = event.pageX;
-        lastPageY = event.pageY;
-        lastPlayerLeft = player.left;
-        lastPlayerTop = player.top;
-    });
+  function hideMini() {
+    const { $mini } = art.template
+    if ($mini) {
+      removeClass($player, 'art-mini')
+      setStyle($mini, 'display', 'none')
+      $player.prepend($video)
+      art.emit('mini', false)
+    }
+  }
 
-    proxy(document, 'mousemove', (event) => {
-        if (isDroging) {
-            addClass($player, 'art-is-dragging');
-            const top = lastPlayerTop + event.pageY - lastPageY;
-            const left = lastPlayerLeft + event.pageX - lastPageX;
-            setStyle($player, 'top', `${top}px`);
-            setStyle($player, 'left', `${left}px`);
-            storage.set('top', top);
-            storage.set('left', left);
+  function initState($play, $pause) {
+    if (art.playing) {
+      setStyle($play, 'display', `none`)
+      setStyle($pause, 'display', `flex`)
+    }
+    else {
+      setStyle($play, 'display', `flex`)
+      setStyle($pause, 'display', `none`)
+    }
+  }
+
+  function createMini() {
+    const { $mini } = art.template
+    if ($mini) {
+      append($mini, $video)
+      return setStyle($mini, 'display', 'flex')
+    }
+    else {
+      const $mini = createElement('div')
+      addClass($mini, 'art-mini-popup')
+      append(document.body, $mini)
+      art.template.$mini = $mini
+      append($mini, $video)
+
+      const $close = append($mini, `<div class="art-mini-close"></div>`)
+      append($close, icons.close)
+      proxy($close, 'click', hideMini)
+
+      const $state = append($mini, `<div class="art-mini-state"></div>`)
+      const $play = append($state, icons.play)
+      const $pause = append($state, icons.pause)
+      proxy($play, 'click', () => silencePromise(art.play()))
+      proxy($pause, 'click', () => art.pause())
+      initState($play, $pause)
+      art.on('video:playing', () => initState($play, $pause))
+      art.on('video:pause', () => initState($play, $pause))
+      art.on('video:timeupdate', () => initState($play, $pause))
+
+      proxy($mini, 'mousedown', (event) => {
+        isDragging = event.button === 0
+        lastPageX = event.pageX
+        lastPageY = event.pageY
+      })
+
+      art.on('document:mousemove', (event) => {
+        if (isDragging) {
+          addClass($mini, 'art-mini-dragging')
+          const x = event.pageX - lastPageX
+          const y = event.pageY - lastPageY
+          setStyle($mini, 'transform', `translate(${x}px, ${y}px)`)
         }
-    });
+      })
 
-    proxy(document, 'mouseup', () => {
-        isDroging = false;
-        removeClass($player, 'art-is-dragging');
-    });
+      art.on('document:mouseup', () => {
+        if (isDragging) {
+          isDragging = false
+          removeClass($mini, 'art-mini-dragging')
+          const rect = getRect($mini)
+          storage.set('left', rect.left)
+          storage.set('top', rect.top)
+          setStyle($mini, 'left', `${rect.left}px`)
+          setStyle($mini, 'top', `${rect.top}px`)
+          setStyle($mini, 'transform', null)
+        }
+      })
 
-    proxy($miniClose, 'click', () => {
-        player.mini = false;
-        isDroging = false;
-        removeClass($player, 'art-is-dragging');
-    });
+      return $mini
+    }
+  }
 
-    append($miniTitle, option.title || i18n.get('Mini player'));
+  function initMini() {
+    const { $mini } = art.template
+    const rect = getRect($mini)
+    const top = window.innerHeight - rect.height - 50
+    const left = window.innerWidth - rect.width - 50
+    storage.set('top', top)
+    storage.set('left', left)
+    setStyle($mini, 'top', `${top}px`)
+    setStyle($mini, 'left', `${left}px`)
+  }
 
-    def(player, 'mini', {
-        get() {
-            return hasClass($player, 'art-mini');
-        },
-        set(value) {
-            if (value) {
-                player.autoSize = false;
-                cacheStyle = $player.style.cssText;
-                addClass($player, 'art-mini');
-                const top = storage.get('top');
-                const left = storage.get('left');
-                if (top && left) {
-                    setStyle($player, 'top', `${top}px`);
-                    setStyle($player, 'left', `${left}px`);
-                    if (!isInViewport($miniHeader)) {
-                        storage.del('top');
-                        storage.del('left');
-                        player.mini = true;
-                    }
-                } else {
-                    const $body = document.body;
-                    const top = $body.clientHeight - player.height - 50;
-                    const left = $body.clientWidth - player.width - 50;
-                    storage.set('top', top);
-                    storage.set('left', left);
-                    setStyle($player, 'top', `${top}px`);
-                    setStyle($player, 'left', `${left}px`);
-                }
-                player.aspectRatio = false;
-                player.playbackRate = false;
-                art.emit('mini', true);
-            } else {
-                $player.style.cssText = cacheStyle;
-                removeClass($player, 'art-mini');
-                setStyle($player, 'top', null);
-                setStyle($player, 'left', null);
-                player.aspectRatio = false;
-                player.playbackRate = false;
-                player.autoSize = option.autoSize;
-                art.emit('mini');
-            }
-        },
-    });
-
-    def(player, 'miniToggle', {
-        set(value) {
-            if (value) {
-                player.mini = !player.mini;
-            }
-        },
-    });
+  def(art, 'mini', {
+    get() {
+      return hasClass($player, 'art-mini')
+    },
+    set(value) {
+      if (value) {
+        art.state = 'mini'
+        addClass($player, 'art-mini')
+        const $mini = createMini()
+        const top = storage.get('top')
+        const left = storage.get('left')
+        if (typeof top === 'number' && typeof left === 'number') {
+          setStyle($mini, 'top', `${top}px`)
+          setStyle($mini, 'left', `${left}px`)
+          if (!isInViewport($mini)) {
+            initMini()
+          }
+        }
+        else {
+          initMini()
+        }
+        art.emit('mini', true)
+      }
+      else {
+        hideMini()
+      }
+    },
+  })
 }
